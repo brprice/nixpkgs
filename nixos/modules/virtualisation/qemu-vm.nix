@@ -253,6 +253,9 @@ let
           export NIXOS_INSTALL_BOOTLOADER=1
           ${config.system.build.toplevel}/bin/switch-to-configuration boot
 
+          # Record the nix db to load on boot (underlying nix store is shared with host)
+          sed -i '/options/ s|$| regInfo=${regInfo}/registration|' /boot/loader/entries/nixos-generation-1.conf
+
           umount /boot
         '' # */
     );
