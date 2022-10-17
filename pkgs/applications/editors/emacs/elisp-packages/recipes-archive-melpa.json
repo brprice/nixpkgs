@@ -67866,8 +67866,8 @@
   "repo": "emacs-lsp/lsp-treemacs",
   "unstable": {
    "version": [
-    20220502,
-    459
+    20220918,
+    742
    ],
    "deps": [
     "dash",
@@ -67876,8 +67876,8 @@
     "lsp-mode",
     "treemacs"
    ],
-   "commit": "9859326df6b8e8c954a3c227e53b6878e54aaae8",
-   "sha256": "0g1azw6638hig4bwy00wyr8pdj13dwf3v5lsjbgxsgckz831wl79"
+   "commit": "f7ae97560cfbc88e781a2d5b9253dace7175b918",
+   "sha256": "09zcv0zjzikf1f5l6bkjafwb6icx4vpd625as01d4b2cywnzsyhl"
   },
   "stable": {
    "version": [
