@@ -15,7 +15,7 @@ let testStoreSharing = { useBootLoader }: makeTest  {
     { pkgs, lib, ... }:
     {
       imports = [ ../modules/virtualisation/qemu-vm.nix ];
-      virtualisation.useBootLoader = true;
+      virtualisation.useBootLoader = useBootLoader;
     };
 
   testScript = ''
