@@ -27,7 +27,7 @@ Which to use? Should something be updated?
 ### Q2
 Is there any automatic discovery / a test that every test fixture is used?
 
-### Documentation inconsistencies
+### Q3 Documentation inconsistencies
 `man nixos-rebuild` says that both flavors of vm share the host store readonly.
 However, in reality they both have a writable overlayfs store, and only `vm` properly registers store contents
 /nixpkgs/nixos/modules/virtualisation/qemu-vm.nix says similar.
@@ -44,3 +44,8 @@ However, it is!
 >         default = true; # FIXME
 >         ...
 See commit a02bb00156086b45e68c1112008db506734f8649
+
+### Q4 testing
+https://nixos.org/manual/nixos/stable/index.html#ssec-machine-objects
+says `screenshot` "takes a picture...is linked from the HTML log."
+I see the screenshots in `./result`, but what/where is this HTML log?
