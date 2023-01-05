@@ -32,3 +32,15 @@ Is there any automatic discovery / a test that every test fixture is used?
 However, in reality they both have a writable overlayfs store, and only `vm` properly registers store contents
 /nixpkgs/nixos/modules/virtualisation/qemu-vm.nix says similar.
 
+
+https://nixos.org/manual/nixos/stable/index.html#sec-nixos-test-nodes says
+>  `virtualisation.writableStore`
+>    By default, the Nix store in the VM is not writable.
+However, it is!
+/nixpkgs/nixos/modules/virtualisation/qemu-vm.nix has
+> virtualisation.writableStore =
+>       mkOption {
+>         type = types.bool;
+>         default = true; # FIXME
+>         ...
+See commit a02bb00156086b45e68c1112008db506734f8649
