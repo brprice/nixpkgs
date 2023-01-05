@@ -1,0 +1,34 @@
+## Notes
+* I am working off a nixpkgs-22.05, so may need some porting onto master
+* I am attempting two things (in sequence) related to building `vm` and `vmWithBootLoader`:
+    * sharing the host's store:
+        * `vm` shares the host store fine, but `vmWithBootLoader` does not, due to the implementation going via the qemu-provided kernel parameters. It doesn't even register the current closure in the nix db. Thus when doing a deployment (e.g. testing a deploy-rs config) with a minor change on the vm, we need to copy the whole running system!
+        * This means that interation is very slow!
+        * I may want to make it configurable on/off? This would make it easy to see what needs copying if doing a dry run of an actual remote.
+        * I have looked into this before https://github.com/NixOS/nixpkgs/issues/128216, trying to integrate with the current implementation, but it seems tricky (I should revisit -- I don't know why using `postBootCommands` directly was too early (before devices mount), but `sed`ing the bootloader entry (which is then referenced in `postBootCommands`) apparently worked.
+        * I wonder if adding an appropriate `systemd` unit would be the best way to go?
+    * Making the VM rebootable in two senses:
+        * in one qemu session doing `systemctl reboot`
+        * exiting the qemu session and firing another up
+		* These both assume that the store is writable
+        * I want this so can easily test remote deployments on a vm
+		
+## Questions:
+
+### Q1
+https://nixos.org/manual/nixos/stable/index.html#sec-nixos-tests says
+
+> Tests that are part of NixOS are added to nixos/tests/all-tests.nix.
+> `hostname = runTest ./hostname.nix;`
+
+but that file seems to mostly use `handleTest`.
+Which to use? Should something be updated?
+
+### Q2
+Is there any automatic discovery / a test that every test fixture is used?
+
+### Documentation inconsistencies
+`man nixos-rebuild` says that both flavors of vm share the host store readonly.
+However, in reality they both have a writable overlayfs store, and only `vm` properly registers store contents
+/nixpkgs/nixos/modules/virtualisation/qemu-vm.nix says similar.
+
