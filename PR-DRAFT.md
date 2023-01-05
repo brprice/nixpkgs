@@ -51,3 +51,7 @@ See commit a02bb00156086b45e68c1112008db506734f8649
 https://nixos.org/manual/nixos/stable/index.html#ssec-machine-objects
 says `screenshot` "takes a picture...is linked from the HTML log."
 I see the screenshots in `./result`, but what/where is this HTML log?
+
+### Q5 feedback
+I have added a bunch of tests of store-sharing.
+I'm not sure if they are all useful to have, or some are redundent etc
