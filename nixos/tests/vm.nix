@@ -13,8 +13,8 @@ import ./make-test-python.nix ({ pkgs, latestKernel ? false, ... }:
 
   nodes.machine =
     { pkgs, lib, ... }:
-    { boot.kernelPackages = lib.mkIf latestKernel pkgs.linuxPackages_latest;
-      boot.loader.systemd-boot.enable = true; # DOES NOT DO WHAT I WANT...
+    {
+      imports = [ ../modules/virtualisation/qemu-vm.nix ];
       virtualisation.useBootLoader = true;
     };
 
