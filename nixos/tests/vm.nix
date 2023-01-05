@@ -2,10 +2,10 @@
 # think I can do it -- cannot seem to do a test of vmWithBootLoader
 #
 # Maybe I need to look at ~/dev/nixpkgs/nixos/tests/systemd-boot.nix
+{ system, pkgs }:
 
-import ./make-test-python.nix ({ pkgs, latestKernel ? false, ... }:
-
-{
+with import ../lib/testing-python.nix { inherit system pkgs; };
+let testStoreSharing = { useBootLoader }: makeTest  {
   name = "vm";
   meta = with pkgs.lib.maintainers; {
     maintainers = [ brprice ];
@@ -56,4 +56,9 @@ import ./make-test-python.nix ({ pkgs, latestKernel ? false, ... }:
           machine.send_key("ctrl-alt-delete")
           machine.wait_for_shutdown()
   '';
-})
+};
+in 
+{
+  noBootLoader = testStoreSharing {useBootLoader = false;};
+  withBootLoader = testStoreSharing {useBootLoader = true;};
+}
