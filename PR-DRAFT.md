@@ -7,6 +7,8 @@
         * I may want to make it configurable on/off? This would make it easy to see what needs copying if doing a dry run of an actual remote.
         * I have looked into this before https://github.com/NixOS/nixpkgs/issues/128216, trying to integrate with the current implementation, but it seems tricky (I should revisit -- I don't know why using `postBootCommands` directly was too early (before devices mount), but `sed`ing the bootloader entry (which is then referenced in `postBootCommands`) apparently worked.
         * I wonder if adding an appropriate `systemd` unit would be the best way to go?
+		* I am trying to add a nixos test to ensure it works
+		  * I would like to test `nix-store --gc --print-roots` does something sensible, like listing `/run/{current,booted}-system`, and that `nix-store --dump-db` is non-empty.
     * Making the VM rebootable in two senses:
         * in one qemu session doing `systemctl reboot`
         * exiting the qemu session and firing another up
