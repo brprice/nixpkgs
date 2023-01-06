@@ -122,6 +122,7 @@ let
           TMPDIR=$(mktemp -d nix-vm.XXXXXXXXXX --tmpdir)
       fi
 
+      # TODO: should the store image be (optionally?) persisted?
       ${lib.optionalString cfg.useNixStoreImage
       ''
         # Create a writable copy/snapshot of the store image.
@@ -131,11 +132,16 @@ let
       # Create a directory for exchanging data with the VM.
       mkdir -p "$TMPDIR/xchg"
 
+      # TODO: add a config option for the boot disk image name. Currently we generate "./${config.system.name}.qcow2-boot", which is terrible!
+      NIX_BOOT_DISK_IMAGE=$(readlink -f "''${NIX_BOOT_DISK_IMAGE:-${config.virtualisation.diskImage}-boot}")
+
       ${lib.optionalString cfg.useBootLoader
       ''
-        # Create a writable copy/snapshot of the boot disk.
-        # A writable boot disk can be booted from automatically.
-        ${qemu}/bin/qemu-img create -f qcow2 -F qcow2 -b ${bootDisk}/disk.img "$TMPDIR/disk.img"
+        if ! test -e "$NIX_BOOT_DISK_IMAGE"; then
+            # Create a writable copy/snapshot of the boot disk.
+            # A writable boot disk can be booted from automatically.
+            ${qemu}/bin/qemu-img create -f qcow2 -F qcow2 -b ${bootDisk}/disk.img "$NIX_BOOT_DISK_IMAGE"
+        fi
 
         NIX_EFI_VARS=$(readlink -f "''${NIX_EFI_VARS:-${cfg.efiVars}}")
 
@@ -151,6 +157,7 @@ let
 
       cd "$TMPDIR"
 
+      # Should these be optionally persisted?
       ${lib.optionalString (cfg.emptyDiskImages != []) "idx=0"}
       ${flip concatMapStrings cfg.emptyDiskImages (size: ''
         if ! test -e "empty$idx.qcow2"; then
@@ -341,7 +348,7 @@ in
             The disk size in megabytes of the virtual machine.
           '';
       };
-
+# TODO: document persistance properties here
     virtualisation.diskImage =
       mkOption {
         type = types.str;
@@ -700,7 +707,7 @@ in
             useEFIBoot is ignored if useBootLoader == false.
           '';
       };
-
+# TODO: document persistance properties here
     virtualisation.efiVars =
       mkOption {
         type = types.str;
@@ -965,7 +972,7 @@ echo
         # note [Disk layout with `useBootLoader`].
         {
           name = "boot";
-          file = ''"$TMPDIR"/disk.img'';
+          file = ''"$NIX_BOOT_DISK_IMAGE"'';
           driveExtraOpts.media = "disk";
           deviceExtraOpts.bootindex = "3";
         }
