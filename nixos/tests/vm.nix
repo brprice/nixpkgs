@@ -5,7 +5,7 @@
 { system, pkgs }:
 
 with import ../lib/testing-python.nix { inherit system pkgs; };
-let testStoreSharing = { useBootLoader }: makeTest  {
+let testStoreSharing = { useBootLoader, initrdSystemd }: makeTest  {
   name = "vm";
   meta = with pkgs.lib.maintainers; {
     maintainers = [ brprice ];
@@ -16,6 +16,7 @@ let testStoreSharing = { useBootLoader }: makeTest  {
     {
       imports = [ ../modules/virtualisation/qemu-vm.nix ];
       virtualisation.useBootLoader = useBootLoader;
+      boot.initrd.systemd.enable = initrdSystemd;
     };
 
   testScript = ''
@@ -33,6 +34,8 @@ let testStoreSharing = { useBootLoader }: makeTest  {
 };
 in 
 {
-  noBootLoader = testStoreSharing {useBootLoader = false;};
-  withBootLoader = testStoreSharing {useBootLoader = true;};
+  noBootLoader = testStoreSharing {useBootLoader = false; initrdSystemd = false;};
+  withBootLoader = testStoreSharing {useBootLoader = true; initrdSystemd = false;};
+  noBootLoaderInitrdSystemd = testStoreSharing {useBootLoader = false; initrdSystemd = true;};
+  withBootLoaderInitrdSystemd = testStoreSharing {useBootLoader = true; initrdSystemd = true;};
 }
