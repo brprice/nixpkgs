@@ -806,7 +806,26 @@ in
           mount -t overlay overlay $targetRoot/nix/store \
             -o lowerdir=$targetRoot/nix/.ro-store,upperdir=$targetRoot/nix/.rw-store/store,workdir=$targetRoot/nix/.rw-store/work || fail
         ''}
+echo postMountCommands
+echo '/:'
+ls /
+echo
+echo "targetRoot = $targetRoot:"
+ls $targetRoot
+echo
+        mkdir /run/regInfo
+#        mount -t ext2 ${lookupDriveDeviceName "regInfo" cfg.qemu.drives} /run/regInfo # TODO: similar for systemd initrd...
+# TODO: actually, change approach. Let's let the real system (not initrd) do this mounting, and run a systemd service to do the registration -- that way we only have one codepath to consider
       '';
+
+    systemd.services.nix-store-share = {
+      after = [ "run-regInfo.mount" ];
+      wantedBy = [ "basic.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.bash}/bin/bash -c '${config.nix.package.out}/bin/nix-store --load-db < /run/regInfo/registration'";
+      };
+    };
 
     systemd.tmpfiles.rules = lib.mkIf config.boot.initrd.systemd.enable [
       "f /etc/NIXOS 0644 root root -"
@@ -820,8 +839,13 @@ in
     # allow `system.build.toplevel' to be included.  (If we had a direct
     # reference to ${regInfo} here, then we would get a cyclic
     # dependency.)
+    #
+    # TODO: note that these messages are not displayed in initrd.systemd mode, but they are displayed anyway
+    # to see them there, use .#nixosTests.vm.noBootLoader.driverInteractive so you can drop into a shell after the tests have been run
     boot.postBootCommands = lib.mkIf config.nix.enable
       ''
+        exec > >(tee "/postBootCommands.log") 2>&1
+
         echo POSTBOOTCOMMANDS
         echo "PATH=$PATH"
         echo ""
@@ -842,9 +866,9 @@ in
         fi
         # stop execution, so messages are easier to see
         #cat 
-        if [[ "$(cat /proc/cmdline)" =~ regInfo=([^ ]*) ]]; then
-          ${config.nix.package.out}/bin/nix-store --load-db < ''${BASH_REMATCH[1]}
-        fi
+        #if [[ "$(cat /proc/cmdline)" =~ regInfo=([^ ]*) ]]; then
+        #  ${config.nix.package.out}/bin/nix-store --load-db < ''${BASH_REMATCH[1]}
+        #fi
       '';
 
     boot.initrd.availableKernelModules =
@@ -983,7 +1007,7 @@ in
         "/run/regInfo" = {
           device = "${lookupDriveDeviceName "regInfo" cfg.qemu.drives}";
           fsType = "ext2";
-          #noCheck = true; # fsck fails on a r/o filesystem
+          #noCheck = true; # TODO fsck fails on a r/o filesystem -- this seems not to be needed...
         };
         
         "/tmp" = mkIf config.boot.tmpOnTmpfs
