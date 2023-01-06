@@ -62,4 +62,28 @@ in
            machine.succeed("ls /test")
   '';
   };
+
+  tmpInternalReboot = makeTest {
+    name = "tmp";
+    meta = with pkgs.lib.maintainers; {
+      maintainers = [ brprice ];
+    };
+    nodes.machine =
+      { pkgs, lib, ... }:
+      {
+        imports = [ ../modules/virtualisation/qemu-vm.nix ];
+        virtualisation.useBootLoader = false;
+      };
+    testScript = ''
+      machine.wait_for_unit("multi-user.target")
+      machine.fail("ls /test")
+      machine.succeed("touch /test")
+      machine.succeed("ls /test")
+
+      with subtest("rebooting persists data"):
+           machine.execute("reboot")
+           machine.wait_for_unit("multi-user.target")
+           machine.succeed("ls /test")
+  '';
+  };
 }
