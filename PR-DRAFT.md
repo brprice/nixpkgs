@@ -34,6 +34,10 @@
 				* FAILS: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages` and `virtualisation.writableStoreUseTmpfs={initial=false, switched=true}` AND imports the `qemu-vm.nix` only in the initial vm's config (not in the `switch`ed-to one); reboot externally: we boot into the old system
 			* Most of these data are "internal reboot works, external reverts to initial system" which is consistent with "duh, boot disk is recreated!"
 			  However, the "slightly odd scenarios" are confusing!
+			  But, looking at the `nix-diff` of the deployed `config.system.build.toplevel`, it seems that the fstab only includes the host store if we import `qemu-vm.nix` - this handily explains the difference!
+			  (Assuming that the same problem occurs in the initfs, but I guess so, as the `initrd-fsinfo` also has this similar problem)
+			  I suspect that not mounting the store you are relying on is not supported!
+			  TODO: this should somehow be documented in my rebooting work
 ## Questions:
 
 ### Q1
