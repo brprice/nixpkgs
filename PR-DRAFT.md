@@ -16,8 +16,15 @@
     * Making the VM rebootable in two senses:
         * in one qemu session doing `systemctl reboot`
         * exiting the qemu session and firing another up
-		* These both assume that the store is writable
+		* These both assume that the store is writable and persistant (i.e. `virtualisation.writableStoreUseTmpfs = false`)
+		* Obviously if we are in a no-bootloader vm, the initrd etc are hard-coded in the qemu config, so we won't be able to switch configuration.
+		  Let's only worry about running with a bootloader. I think we simply require that /boot is writeable and persistant -- currently it is writable but re-created on each launch of the VM
         * I want this so can easily test remote deployments on a vm
+		* Detailed notes:
+    		* Works: create new vm; add some files in /root and in the store; reboot internally or externally - changes are still there
+			* Works: create new vm; add some files in /boot; reboot internally - changes are still there
+			* FAILS: create new vm; add some files in /boot; reboot externally - changes vanish
+			* what about: switch ?
 		
 ## Questions:
 
