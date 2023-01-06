@@ -38,4 +38,28 @@ in
   withBootLoader = testStoreSharing {useBootLoader = true; initrdSystemd = false;};
   noBootLoaderInitrdSystemd = testStoreSharing {useBootLoader = false; initrdSystemd = true;};
   withBootLoaderInitrdSystemd = testStoreSharing {useBootLoader = true; initrdSystemd = true;};
+
+  tmpExternalReboot = makeTest {
+    name = "tmp";
+    meta = with pkgs.lib.maintainers; {
+      maintainers = [ brprice ];
+    };
+    nodes.machine =
+      { pkgs, lib, ... }:
+      {
+        imports = [ ../modules/virtualisation/qemu-vm.nix ];
+        virtualisation.useBootLoader = false;
+      };
+    testScript = ''
+      machine.wait_for_unit("multi-user.target")
+      machine.fail("ls /test")
+      machine.succeed("touch /test")
+      machine.succeed("ls /test")
+
+      with subtest("rebooting persists data"):
+           machine.shutdown()
+           machine.wait_for_unit("multi-user.target")
+           machine.succeed("ls /test")
+  '';
+  };
 }
