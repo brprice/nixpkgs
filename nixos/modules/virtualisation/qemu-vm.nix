@@ -179,6 +179,23 @@ let
 
   regInfo = pkgs.closureInfo { rootPaths = config.virtualisation.additionalPaths; };
 
+  # TODO: see https://github.com/NixOS/nixpkgs/issues/23052 & references therein
+  # (it would be good to refactor all nixpkgs image-creation code).
+  # This is just a simple "splat these files into an image" snippet, cribbed from make-disk-image.nix
+  #
+  # TODO: do i need to worry about reproducability? see below about GUID/UUIDs
+  #
+  # TODO: I have guessed sizing info, and have no idea if it is sane. compare make-disk-image.nix
+  regInfoDisk = pkgs.runCommand "regInfo" {} ''
+    mebibyte=$(( 1024 * 1024 ))
+    diskSize=$((2*$(du --block-size $mebibyte ${regInfo}/registration | cut -f 1) ))
+      truncate -s "$((diskSize * mebibyte))" $out
+      ${pkgs.e2fsprogs}/bin/mkfs.ext2 -L 'regInfo' $out
+      ${pkgs.lkl.out}/bin/cptofs -p -t ext2 -i $out ${regInfo}/registration / ||
+        (echo >&2 "ERROR: cptofs failed. diskSize might be too small for closure."; exit 1)
+  '';
+
+
 
   # Generate a hard disk image containing a /boot partition and GRUB
   # in the MBR.  Used when the `useBootLoader' option is set.
@@ -747,9 +764,11 @@ in
 
     # If `useBootLoader`, GRUB goes to the second disk, see
     # note [Disk layout with `useBootLoader`].
+
+    # TODO: update comments. We have inserted a constant/readonly disk between root and (possibly non-existant boot) containing store sharing info
     boot.loader.grub.device = mkVMOverride (
       if cfg.useBootLoader
-        then driveDeviceName 2 # second disk
+        then driveDeviceName 3 # third disk
         else cfg.bootDevice
     );
     boot.loader.grub.gfxmodeBios = with cfg.resolution; "${toString x}x${toString y}";
@@ -803,6 +822,26 @@ in
     # dependency.)
     boot.postBootCommands = lib.mkIf config.nix.enable
       ''
+        echo POSTBOOTCOMMANDS
+        echo "PATH=$PATH"
+        echo ""
+        echo mounts:
+        mount
+        echo ""
+        echo lsblk:
+        lsblk
+        echo ""
+        echo blkid
+        blkid
+        echo ""
+        echo fstab
+        cat /etc/fstab
+        echo ""
+        if [[ "$(cat /proc/cmdline)" =~ regInfo=([^ ]*) ]]; then
+          echo ''${BASH_REMATCH[1]}
+        fi
+        # stop execution, so messages are easier to see
+        #cat 
         if [[ "$(cat /proc/cmdline)" =~ regInfo=([^ ]*) ]]; then
           ${config.nix.package.out}/bin/nix-store --load-db < ''${BASH_REMATCH[1]}
         fi
@@ -885,11 +924,17 @@ in
         file = ''"$NIX_DISK_IMAGE"'';
         driveExtraOpts.cache = "writeback";
         driveExtraOpts.werror = "report";
+      }
+      {
+        name = "regInfo";
+        file = "${regInfoDisk}";
+        driveExtraOpts.werror = "report";
+        driveExtraOpts.readonly = "on";
       }]
       (mkIf cfg.useNixStoreImage [{
         name = "nix-store";
         file = ''"$TMPDIR"/store.img'';
-        deviceExtraOpts.bootindex = if cfg.useBootLoader then "3" else "2";
+        deviceExtraOpts.bootindex = if cfg.useBootLoader then "4" else "3";
       }])
       (mkIf cfg.useBootLoader [
         # The order of this list determines the device names, see
@@ -898,7 +943,7 @@ in
           name = "boot";
           file = ''"$TMPDIR"/disk.img'';
           driveExtraOpts.media = "disk";
-          deviceExtraOpts.bootindex = "1";
+          deviceExtraOpts.bootindex = "3";
         }
       ])
       (imap0 (idx: _: {
@@ -935,6 +980,12 @@ in
         "/".fsType = "ext4";
         "/".autoFormat = true;
 
+        "/run/regInfo" = {
+          device = "${lookupDriveDeviceName "regInfo" cfg.qemu.drives}";
+          fsType = "ext2";
+          #noCheck = true; # fsck fails on a r/o filesystem
+        };
+        
         "/tmp" = mkIf config.boot.tmpOnTmpfs
           { device = "tmpfs";
             fsType = "tmpfs";
@@ -958,7 +1009,7 @@ in
 
         "/boot" = mkIf cfg.useBootLoader
           # see note [Disk layout with `useBootLoader`]
-          { device = "${lookupDriveDeviceName "boot" cfg.qemu.drives}2"; # 2 for e.g. `vdb2`, as created in `bootDisk`
+          { device = "${lookupDriveDeviceName "boot" cfg.qemu.drives}2"; # 2 for e.g. `vdc2`, as created in `bootDisk`
             fsType = "vfat";
             noCheck = true; # fsck fails on a r/o filesystem
           };
