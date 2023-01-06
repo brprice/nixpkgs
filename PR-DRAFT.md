@@ -1,7 +1,7 @@
 ## Notes
 * I am working off a nixpkgs-22.05, so may need some porting onto master
 * I am attempting two things (in sequence) related to building `vm` and `vmWithBootLoader`:
-    * ([EDIT: AARGH, SOMEHOW MY CHANGES BREAK DEPLOYS `switch` TO A VM!] Mostly done, just needs cleaning up and PR-ing (rebase onto master also)) sharing the host's store:
+    * (Mostly done, just needs cleaning up and PR-ing (rebase onto master also)) sharing the host's store:
         * `vm` shares the host store fine, but `vmWithBootLoader` does not, due to the implementation going via the qemu-provided kernel parameters. It doesn't even register the current closure in the nix db. Thus when doing a deployment (e.g. testing a deploy-rs config) with a minor change on the vm, we need to copy the whole running system!
         * This means that interation is very slow!
         * I may want to make it configurable on/off? This would make it easy to see what needs copying if doing a dry run of an actual remote.
@@ -10,6 +10,9 @@
         * I wonder if adding an appropriate `systemd` unit would be the best way to go?
 		* I am trying to add a nixos test to ensure it works
 		  * I would like to test `nix-store --gc --print-roots` does something sensible, like listing `/run/{current,booted}-system`, and that `nix-store --dump-db` is non-empty.
+		* An aside: Can I make the drive layout into nix attributes (or similar), so can programmatically access, rather than hardcoding magic device names?
+		  Background: changing to this branch of nixpkgs broke my try-a-deploy-on-a-temporary-vm, as it hardcoded `/dev/vdb2` as the boot drive, but it is now `/dev/vdc2`!
+		  CF Question Q6 below
     * Making the VM rebootable in two senses:
         * in one qemu session doing `systemctl reboot`
         * exiting the qemu session and firing another up
@@ -56,3 +59,13 @@ I see the screenshots in `./result`, but what/where is this HTML log?
 ### Q5 feedback
 I have added a bunch of tests of store-sharing.
 I'm not sure if they are all useful to have, or some are redundent etc
+
+### Q6 changing drive names
+(cf my aside about breaking try-a-deploy-on-a-temporary-vm because of hardcoded device names)
+This changes device names.
+The root device stays the same, but everything else moves.
+This was done out of expediency, since it gave a stable name to the regInfo drive and I updated references to boot drive in nixpkgs.
+However, I don't know how many configs in the wild may hardcode `/boot = /dev/vdb2` and would be broken.
+Two thoughts:
+- I could just put the reginfo drive at the end
+- potentially we should expose an attrset of drive names?
