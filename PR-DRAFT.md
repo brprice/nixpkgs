@@ -24,8 +24,16 @@
     		* Works: create new vm; add some files in /root and in the store; reboot internally or externally - changes are still there
 			* Works: create new vm; add some files in /boot; reboot internally - changes are still there
 			* FAILS: create new vm; add some files in /boot; reboot externally - changes vanish
-			* what about: switch ?
-		
+			* Works: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages`; reboot internally: we boot into the new system
+			* FAILS: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages`; reboot externally: we boot into the old system
+			* Works: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages` and `boot.loader.timeout`; reboot internally: we see the new bootloader config and boot into the new system
+			* FAILS: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages` and `boot.loader.timeout`; reboot externally: we boot into the old system
+			* Some slightly odd scenarios I noticed, and am unsure if "should" be supported:
+				* Works: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages` and `virtualisation.writableStoreUseTmpfs={initial=false, switched=true}`; reboot internally: we boot into the new system
+				* FAILS: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages` and `virtualisation.writableStoreUseTmpfs={initial=false, switched=true}` AND imports the `qemu-vm.nix` only in the initial vm's config (not in the `switch`ed-to one); reboot internally: we see the new bootloader config, but boot fails with `stage 2 init script (...) not found`
+				* FAILS: create new vm; do a `nixos-rebuild --target-host <MY-VM> switch` with something that changes only `systemPackages` and `virtualisation.writableStoreUseTmpfs={initial=false, switched=true}` AND imports the `qemu-vm.nix` only in the initial vm's config (not in the `switch`ed-to one); reboot externally: we boot into the old system
+			* Most of these data are "internal reboot works, external reverts to initial system" which is consistent with "duh, boot disk is recreated!"
+			  However, the "slightly odd scenarios" are confusing!
 ## Questions:
 
 ### Q1
