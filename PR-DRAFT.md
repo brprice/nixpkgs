@@ -1,10 +1,11 @@
 ## Notes
 * I am working off a nixpkgs-22.05, so may need some porting onto master
 * I am attempting two things (in sequence) related to building `vm` and `vmWithBootLoader`:
-    * sharing the host's store:
+    * (Mostly done, just needs cleaning up and PR-ing (rebase onto master also)) sharing the host's store:
         * `vm` shares the host store fine, but `vmWithBootLoader` does not, due to the implementation going via the qemu-provided kernel parameters. It doesn't even register the current closure in the nix db. Thus when doing a deployment (e.g. testing a deploy-rs config) with a minor change on the vm, we need to copy the whole running system!
         * This means that interation is very slow!
         * I may want to make it configurable on/off? This would make it easy to see what needs copying if doing a dry run of an actual remote.
+		  EDIT: not so sure about this now -- the only things registered are the closure of the system, so still copy differences (even though they exist in the store directory, they are not registered in the db, so will be copied)
         * I have looked into this before https://github.com/NixOS/nixpkgs/issues/128216, trying to integrate with the current implementation, but it seems tricky (I should revisit -- I don't know why using `postBootCommands` directly was too early (before devices mount), but `sed`ing the bootloader entry (which is then referenced in `postBootCommands`) apparently worked.
         * I wonder if adding an appropriate `systemd` unit would be the best way to go?
 		* I am trying to add a nixos test to ensure it works
