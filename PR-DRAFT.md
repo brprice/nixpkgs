@@ -1,7 +1,7 @@
 ## Notes
 * I am working off a nixpkgs-22.05, so may need some porting onto master
 * I am attempting two things (in sequence) related to building `vm` and `vmWithBootLoader`:
-    * (Mostly done, just needs cleaning up and PR-ing (rebase onto master also)) sharing the host's store:
+    * ([EDIT: AARGH, SOMEHOW MY CHANGES BREAK DEPLOYS `switch` TO A VM!] Mostly done, just needs cleaning up and PR-ing (rebase onto master also)) sharing the host's store:
         * `vm` shares the host store fine, but `vmWithBootLoader` does not, due to the implementation going via the qemu-provided kernel parameters. It doesn't even register the current closure in the nix db. Thus when doing a deployment (e.g. testing a deploy-rs config) with a minor change on the vm, we need to copy the whole running system!
         * This means that interation is very slow!
         * I may want to make it configurable on/off? This would make it easy to see what needs copying if doing a dry run of an actual remote.
