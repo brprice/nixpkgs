@@ -152,11 +152,8 @@ class StartCommand:
             display_opts += " -nographic"
 
         # qemu options
-        qemu_opts = ""
+        qemu_opts = "" if allow_reboot else " -no-reboot"
         qemu_opts += (
-            ""
-            if allow_reboot
-            else " -no-reboot"
             " -device virtio-serial"
             " -device virtconsole,chardev=shell"
             " -device virtio-rng-pci"

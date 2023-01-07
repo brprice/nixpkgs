@@ -67,6 +67,7 @@ in
     # NB: this test does not work at all
     # - with vanilla nixpkgs, the test runner passes '-no-reboot' to qemu, thus killing the vm when it wants to reboot
     # - with a one word change to 'machine.py' to set 'allow_reboot = True', we cause a massive rebuild and the initial wait_for_unit("multi-user.target") never completes
+    # - with also changing the qemu_opts to keep the device options, the vm runs and reboots, but the test driver errors out with `error: "invalid literal for int() with base 10: ''"` at roughly the point where in the first boot it connected to the guest root shell. I see no obvious differences in the log.
     name = "tmp";
     meta = with pkgs.lib.maintainers; {
       maintainers = [ brprice ];
