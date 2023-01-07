@@ -64,6 +64,9 @@ in
   };
 
   tmpInternalReboot = makeTest {
+    # NB: this test does not work at all
+    # - with vanilla nixpkgs, the test runner passes '-no-reboot' to qemu, thus killing the vm when it wants to reboot
+    # - with a one word change to 'machine.py' to set 'allow_reboot = True', we cause a massive rebuild and the initial wait_for_unit("multi-user.target") never completes
     name = "tmp";
     meta = with pkgs.lib.maintainers; {
       maintainers = [ brprice ];

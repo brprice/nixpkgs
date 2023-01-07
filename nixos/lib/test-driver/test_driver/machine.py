@@ -144,7 +144,7 @@ class StartCommand:
         self,
         monitor_socket_path: Path,
         shell_socket_path: Path,
-        allow_reboot: bool = False,  # TODO: unused, legacy?
+        allow_reboot: bool = True,  # TODO: unused, legacy?
     ) -> str:
         display_opts = ""
         display_available = any(x in os.environ for x in ["DISPLAY", "WAYLAND_DISPLAY"])
