@@ -538,14 +538,21 @@ class Machine:
         self.shell.send(out_command.encode())
 
         # Get the output
-        output = base64.b64decode(self._next_newline_closed_block_from_shell())
+        output_raw = self._next_newline_closed_block_from_shell()
+        print(f"EXECUTE: output_raw: {output_raw}")
+        output = base64.b64decode(output_raw)
+
+        print("EXECUTE: output: {}".format(output.decode()))
 
         if not check_return:
             return (-1, output.decode())
 
         # Get the return code
         self.shell.send("echo ${PIPESTATUS[0]}\n".encode())
-        rc = int(self._next_newline_closed_block_from_shell().strip())
+        # rc = int(self._next_newline_closed_block_from_shell().strip())
+        rc_raw = self._next_newline_closed_block_from_shell().strip()
+        print(f"EXECUTE: rc_raw: {rc_raw}")
+        rc = int(rc_raw)
 
         return (rc, output.decode())
 
